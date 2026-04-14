@@ -1,0 +1,283 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   Results Page
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.results-page {
+  padding: var(--space-10) 0 var(--space-20);
+  min-height: 100vh;
+}
+
+.results-loading,
+.results-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 80vh;
+  text-align: center;
+  gap: var(--space-4);
+}
+
+/* ─── Header ──────────────────────────────────────────────────────────── */
+.results-header {
+  text-align: center;
+  margin-bottom: var(--space-12);
+}
+
+.results-header h1 {
+  margin-bottom: var(--space-4);
+}
+
+.results-subtitle {
+  max-width: 550px;
+  margin: 0 auto;
+  font-size: var(--font-size-lg);
+}
+
+/* ─── Podium ──────────────────────────────────────────────────────────── */
+.results-podium {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: var(--space-6);
+  margin-bottom: var(--space-12);
+  padding: var(--space-8) 0;
+}
+
+.podium-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 120px;
+}
+
+.podium-icon {
+  font-size: 2.5rem;
+}
+
+.podium-label {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: var(--font-size-lg);
+}
+
+.podium-pct {
+  font-weight: 800;
+  font-size: var(--font-size-2xl);
+  font-family: var(--font-heading);
+  background: var(--gradient-vibrant);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.podium-bar {
+  width: 100%;
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+  position: relative;
+  min-width: 100px;
+}
+
+.podium-rank {
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: var(--font-size-xl);
+  color: white;
+  padding: var(--space-3) 0;
+}
+
+.podium-1 .podium-icon { font-size: 3rem; }
+.podium-1 .podium-label { font-size: var(--font-size-xl); }
+.podium-1 .podium-pct { font-size: var(--font-size-3xl); }
+.podium-1 .podium-bar { min-width: 130px; }
+
+/* ─── Score Breakdown ─────────────────────────────────────────────────── */
+.results-breakdown {
+  margin-bottom: var(--space-10);
+}
+
+.score-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-4) 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.score-row:last-child {
+  border-bottom: none;
+}
+
+.score-row-left {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 200px;
+}
+
+.score-row-icon {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.score-row-label {
+  display: block;
+  font-weight: 600;
+  font-size: var(--font-size-sm);
+}
+
+.score-row-desc {
+  display: block;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+}
+
+.score-row-right {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.score-bar-track {
+  flex: 1;
+  height: 10px;
+  background: var(--color-bg-tertiary);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.score-bar-fill {
+  height: 100%;
+  border-radius: var(--radius-full);
+  transition: width 0.8s ease;
+}
+
+.score-value {
+  min-width: 45px;
+  text-align: right;
+  font-weight: 700;
+  font-size: var(--font-size-lg);
+  font-family: var(--font-heading);
+}
+
+/* ─── Thinking Styles Summary ─────────────────────────────────────────── */
+.results-styles {
+  margin-bottom: var(--space-10);
+}
+
+.styles-mini-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  justify-content: center;
+}
+
+.style-mini-card {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-5);
+  background: var(--color-bg-tertiary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  transition: all var(--transition-base);
+}
+
+.style-mini-card:hover {
+  border-color: var(--color-border-accent);
+  transform: translateY(-2px);
+}
+
+.style-mini-icon {
+  font-size: 1.3rem;
+}
+
+.style-mini-name {
+  font-weight: 600;
+  font-size: var(--font-size-sm);
+}
+
+/* ─── Roadmap Cards ───────────────────────────────────────────────────── */
+.results-roadmaps {
+  margin-bottom: var(--space-12);
+}
+
+.roadmap-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-4);
+}
+
+.roadmap-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-8);
+  cursor: pointer;
+  border: none;
+  font-family: inherit;
+  color: inherit;
+  text-align: center;
+}
+
+.roadmap-card-icon {
+  font-size: 2.5rem;
+}
+
+.roadmap-card-label {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: var(--font-size-xl);
+}
+
+.roadmap-card-match {
+  font-weight: 600;
+  font-size: var(--font-size-sm);
+}
+
+.roadmap-card-cta {
+  font-size: var(--font-size-sm);
+  color: var(--color-accent-2);
+  margin-top: var(--space-2);
+}
+
+/* ─── Footer ──────────────────────────────────────────────────────────── */
+.results-footer {
+  text-align: center;
+  padding-top: var(--space-8);
+  border-top: 1px solid var(--color-border);
+}
+
+/* ─── Responsive ──────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .results-podium {
+    gap: var(--space-3);
+  }
+
+  .podium-item {
+    min-width: 80px;
+  }
+
+  .podium-1 .podium-bar { min-width: 90px; }
+
+  .score-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-2);
+  }
+
+  .score-row-left {
+    min-width: unset;
+  }
+
+  .score-row-right {
+    width: 100%;
+  }
+
+  .roadmap-cards {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,0 +1,631 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   Shared Activity Styles — used by all 6 activity components
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.activity-page {
+  padding: var(--space-4) 0;
+}
+
+.activity-header {
+  text-align: center;
+  margin-bottom: var(--space-8);
+}
+
+.activity-badge {
+  display: inline-block;
+  padding: var(--space-1) var(--space-4);
+  background: var(--color-bg-glass);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-sm);
+  color: var(--color-accent-2);
+  margin-bottom: var(--space-4);
+}
+
+.activity-header h2 {
+  font-size: var(--font-size-3xl);
+  margin-bottom: var(--space-3);
+}
+
+.activity-header p {
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.activity-content {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.activity-footer {
+  display: flex;
+  justify-content: center;
+  gap: var(--space-4);
+  margin-top: var(--space-10);
+}
+
+/* ─── Sortable Items ──────────────────────────────────────────────────── */
+.sortable-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-4) var(--space-6);
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
+  transition: all var(--transition-base);
+}
+
+.sortable-item:hover {
+  border-color: var(--color-border-accent);
+  background: var(--color-bg-card-hover);
+}
+
+.sortable-item.dragging {
+  opacity: 0.5;
+  box-shadow: var(--shadow-glow);
+  border-color: var(--color-accent-1);
+  z-index: 1000;
+}
+
+.sortable-item .drag-handle {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-lg);
+  flex-shrink: 0;
+}
+
+.sortable-item .item-content {
+  flex: 1;
+}
+
+.sortable-item .item-icon {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+/* ─── Selection Grid ──────────────────────────────────────────────────── */
+.selection-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-4);
+}
+
+.selection-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-6);
+  background: var(--color-bg-card);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  cursor: pointer;
+  transition: all var(--transition-base);
+  text-align: center;
+  color: var(--color-text-primary);
+  font-family: inherit;
+}
+
+.selection-tile:hover {
+  border-color: var(--color-border-accent);
+  background: var(--color-bg-card-hover);
+  transform: translateY(-2px);
+}
+
+.selection-tile.selected {
+  border-color: var(--color-accent-1);
+  background: rgba(124, 58, 237, 0.15);
+  box-shadow: 0 0 20px rgba(124, 58, 237, 0.2);
+}
+
+.selection-tile .tile-icon {
+  font-size: 2rem;
+}
+
+.selection-tile .tile-label {
+  font-weight: 600;
+  font-size: var(--font-size-sm);
+}
+
+.tile-order {
+  position: absolute;
+  top: var(--space-2);
+  right: var(--space-2);
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--gradient-primary);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+}
+
+/* ─── Column Layout (Feature Triage) ──────────────────────────────────── */
+.triage-columns {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-4);
+  min-height: 400px;
+}
+
+.triage-column {
+  background: var(--color-bg-card);
+  border: 2px dashed var(--color-border);
+  border-radius: var(--radius-xl);
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  transition: all var(--transition-base);
+  min-height: 300px;
+}
+
+.triage-column.over {
+  border-color: var(--color-accent-1);
+  background: rgba(124, 58, 237, 0.05);
+}
+
+.triage-column.ship {
+  border-color: rgba(16, 185, 129, 0.3);
+}
+.triage-column.ship .column-header {
+  color: var(--color-success);
+}
+
+.triage-column.reconsider {
+  border-color: rgba(245, 158, 11, 0.3);
+}
+.triage-column.reconsider .column-header {
+  color: var(--color-warning);
+}
+
+.triage-column.cut {
+  border-color: rgba(239, 68, 68, 0.3);
+}
+.triage-column.cut .column-header {
+  color: var(--color-error);
+}
+
+.column-header {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: var(--font-size-lg);
+  text-align: center;
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--color-border);
+  margin-bottom: var(--space-2);
+}
+
+.feature-card {
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-bg-tertiary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
+  transition: all var(--transition-fast);
+  font-size: var(--font-size-sm);
+}
+
+.feature-card:hover {
+  border-color: var(--color-border-accent);
+}
+
+.feature-card.dragging {
+  opacity: 0.4;
+}
+
+/* ─── Debug Dashboard ─────────────────────────────────────────────────── */
+.debug-panels {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: var(--space-4);
+}
+
+.debug-panel {
+  background: var(--color-bg-card);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  padding: var(--space-5);
+  transition: all var(--transition-base);
+  cursor: pointer;
+  position: relative;
+}
+
+.debug-panel:hover {
+  border-color: var(--color-border-accent);
+}
+
+.debug-panel.pinned {
+  border-color: var(--color-accent-2);
+  box-shadow: 0 0 20px rgba(6, 182, 212, 0.2);
+}
+
+.debug-panel .panel-title {
+  font-weight: 600;
+  margin-bottom: var(--space-3);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.debug-panel .panel-data {
+  font-family: 'Courier New', monospace;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  background: rgba(0, 0, 0, 0.3);
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  line-height: 1.5;
+}
+
+.pin-badge {
+  position: absolute;
+  top: var(--space-2);
+  right: var(--space-2);
+  padding: var(--space-1) var(--space-2);
+  background: var(--gradient-primary);
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-xs);
+  color: white;
+  font-weight: 600;
+}
+
+/* ─── Threat Spotter ──────────────────────────────────────────────────── */
+.threat-page {
+  position: relative;
+}
+
+.login-mockup {
+  max-width: 500px;
+  margin: 0 auto;
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  padding: var(--space-8);
+  position: relative;
+}
+
+.vulnerability-zone {
+  padding: var(--space-3);
+  margin: var(--space-3) 0;
+  border: 2px dashed transparent;
+  border-radius: var(--radius-md);
+  transition: all var(--transition-base);
+  cursor: pointer;
+  position: relative;
+}
+
+.vulnerability-zone:hover {
+  border-color: rgba(239, 68, 68, 0.3);
+  background: rgba(239, 68, 68, 0.05);
+}
+
+.vulnerability-zone.flagged {
+  border-color: var(--color-error);
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.flag-icon {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  font-size: 1.2rem;
+}
+
+.timer-display {
+  text-align: center;
+  font-family: var(--font-heading);
+  font-size: var(--font-size-xl);
+  color: var(--color-text-muted);
+  margin-bottom: var(--space-4);
+}
+
+/* ─── Threat Spotter — Mockup Internals ───────────────────────────────── */
+.mockup-browser-bar {
+  background: rgba(0, 0, 0, 0.4);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  padding: var(--space-3) var(--space-4);
+  margin: calc(-1 * var(--space-8)) calc(-1 * var(--space-8)) var(--space-6);
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.browser-dots {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+.dot-red { background: #ef4444; }
+.dot-yellow { background: #f59e0b; }
+.dot-green { background: #10b981; }
+
+.url-zone {
+  flex: 1;
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.url-text {
+  font-family: 'Courier New', monospace;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  word-break: break-all;
+}
+
+.url-suspicious {
+  color: var(--color-error);
+  opacity: 0.8;
+}
+
+.mockup-body {
+  text-align: center;
+}
+
+.mockup-logo {
+  font-size: 2.5rem;
+  margin-bottom: var(--space-3);
+}
+
+.mockup-title {
+  font-size: var(--font-size-xl);
+  margin-bottom: var(--space-1);
+}
+
+.mockup-subtitle {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+  margin-bottom: var(--space-6);
+}
+
+.mockup-field {
+  text-align: left;
+  margin-bottom: var(--space-2);
+}
+
+.mockup-field label {
+  display: block;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  margin-bottom: var(--space-1);
+  font-weight: 600;
+}
+
+.mockup-input {
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-3) var(--space-4);
+  font-family: var(--font-body);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-primary);
+  position: relative;
+}
+
+.mockup-input.password-visible {
+  color: var(--color-error);
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+.field-note {
+  position: absolute;
+  top: 50%;
+  right: var(--space-3);
+  transform: translateY(-50%);
+  font-size: var(--font-size-xs);
+  color: var(--color-error);
+  opacity: 0.6;
+  font-family: 'Courier New', monospace;
+}
+
+.login-attempts {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  background: rgba(239, 68, 68, 0.08);
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(239, 68, 68, 0.15);
+}
+
+.attempts-icon {
+  font-size: 1.2rem;
+  flex-shrink: 0;
+}
+
+.attempts-text {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+}
+
+.mockup-submit-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.mockup-btn {
+  background: var(--gradient-primary);
+  color: white;
+  border: none;
+  border-radius: var(--radius-md);
+  padding: var(--space-3) var(--space-8);
+  font-weight: 600;
+  width: 100%;
+  text-align: center;
+  cursor: default;
+}
+
+.captcha-missing {
+  font-size: var(--font-size-xs);
+  color: var(--color-error);
+  opacity: 0.7;
+}
+
+/* ─── Feature Triage — Card Pool ─────────────────────────────────────── */
+.unassigned-pool {
+  margin-bottom: var(--space-8);
+}
+
+.feature-pool {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: var(--space-4);
+}
+
+.feature-card-triage {
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4) var(--space-5);
+  transition: all var(--transition-base);
+}
+
+.feature-card-triage:hover {
+  border-color: var(--color-border-accent);
+}
+
+.feature-card-header {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+
+.feature-card-icon {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.feature-card-desc {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  margin-top: var(--space-1);
+}
+
+.feature-card-actions {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.triage-btn {
+  flex: 1;
+  padding: var(--space-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-tertiary);
+  cursor: pointer;
+  font-size: 1rem;
+  transition: all var(--transition-fast);
+  font-family: inherit;
+}
+
+.triage-btn:hover {
+  transform: translateY(-1px);
+}
+
+.triage-btn-ship:hover {
+  border-color: var(--color-success);
+  background: rgba(16, 185, 129, 0.15);
+}
+
+.triage-btn-reconsider:hover {
+  border-color: var(--color-warning);
+  background: rgba(245, 158, 11, 0.15);
+}
+
+.triage-btn-cut:hover {
+  border-color: var(--color-error);
+  background: rgba(239, 68, 68, 0.15);
+}
+
+.column-count {
+  margin-left: var(--space-2);
+  font-size: var(--font-size-sm);
+  opacity: 0.5;
+}
+
+.column-desc {
+  text-align: center;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  margin-bottom: var(--space-3);
+}
+
+.column-items {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.column-empty {
+  text-align: center;
+  padding: var(--space-8) var(--space-4);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+  font-style: italic;
+  opacity: 0.5;
+}
+
+.remove-btn {
+  background: none;
+  border: none;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  font-size: var(--font-size-sm);
+  padding: var(--space-1);
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-fast);
+  font-family: inherit;
+}
+
+.remove-btn:hover {
+  color: var(--color-error);
+  background: rgba(239, 68, 68, 0.1);
+}
+
+/* ─── Responsive ──────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .selection-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .triage-columns {
+    grid-template-columns: 1fr;
+  }
+
+  .debug-panels {
+    grid-template-columns: 1fr;
+  }
+
+  .feature-pool {
+    grid-template-columns: 1fr;
+  }
+
+  .login-mockup {
+    padding: var(--space-5);
+  }
+
+  .mockup-browser-bar {
+    margin: calc(-1 * var(--space-5)) calc(-1 * var(--space-5)) var(--space-4);
+  }
+}

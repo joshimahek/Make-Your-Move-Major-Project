@@ -1,0 +1,215 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   Roadmap Page
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.roadmap-page {
+  padding: var(--space-10) 0 var(--space-20);
+  min-height: 100vh;
+}
+
+.roadmap-loading,
+.roadmap-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 80vh;
+  text-align: center;
+  gap: var(--space-4);
+}
+
+/* ─── Back Button ─────────────────────────────────────────────────────── */
+.roadmap-back {
+  background: none;
+  border: none;
+  color: var(--color-text-muted);
+  font-family: var(--font-body);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  padding: var(--space-2) 0;
+  margin-bottom: var(--space-6);
+  transition: color var(--transition-fast);
+}
+
+.roadmap-back:hover {
+  color: var(--color-accent-2);
+}
+
+/* ─── Header ──────────────────────────────────────────────────────────── */
+.roadmap-header {
+  text-align: center;
+  margin-bottom: var(--space-12);
+  position: relative;
+  padding: var(--space-8);
+  border-radius: var(--radius-2xl);
+  overflow: hidden;
+}
+
+.roadmap-header-accent {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: -1;
+  border-radius: inherit;
+}
+
+.roadmap-header h1 {
+  margin-bottom: var(--space-3);
+}
+
+.roadmap-desc {
+  font-size: var(--font-size-lg);
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+/* ─── Timeline ────────────────────────────────────────────────────────── */
+.roadmap-timeline {
+  position: relative;
+  padding: var(--space-8) 0;
+  margin-bottom: var(--space-12);
+}
+
+.timeline-line {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 24px;
+  width: 3px;
+  border-radius: var(--radius-full);
+}
+
+.timeline-item {
+  position: relative;
+  padding-left: 64px;
+  margin-bottom: var(--space-8);
+}
+
+.timeline-item:last-child {
+  margin-bottom: 0;
+}
+
+.timeline-dot {
+  position: absolute;
+  left: 16px;
+  top: 24px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  z-index: 1;
+}
+
+.timeline-card {
+  padding: var(--space-6) !important;
+}
+
+.timeline-card:hover {
+  transform: none !important;
+}
+
+.timeline-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-3);
+}
+
+.timeline-step-num {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: var(--font-size-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.timeline-level-badge {
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+}
+
+.timeline-title {
+  font-size: var(--font-size-lg);
+  margin-bottom: var(--space-3);
+}
+
+.timeline-meta {
+  display: flex;
+  gap: var(--space-4);
+}
+
+.timeline-duration {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
+
+/* ─── AI Note ─────────────────────────────────────────────────────────── */
+.roadmap-ai-note {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-4);
+  margin-bottom: var(--space-10);
+}
+
+.roadmap-ai-note:hover {
+  transform: none !important;
+}
+
+.ai-note-icon {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.roadmap-ai-note p {
+  font-size: var(--font-size-sm);
+  font-style: italic;
+}
+
+/* ─── Explore Other Domains ───────────────────────────────────────────── */
+.roadmap-explore {
+  padding-top: var(--space-8);
+  border-top: 1px solid var(--color-border);
+}
+
+.roadmap-domain-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  justify-content: center;
+}
+
+.domain-pill {
+  padding: var(--space-2) var(--space-5);
+  border: 1px solid;
+  border-radius: var(--radius-full);
+  background: transparent;
+  font-family: var(--font-body);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-base);
+}
+
+.domain-pill:hover {
+  background: rgba(255, 255, 255, 0.05);
+  transform: translateY(-2px);
+}
+
+@media (max-width: 768px) {
+  .timeline-line {
+    left: 16px;
+  }
+
+  .timeline-item {
+    padding-left: 48px;
+  }
+
+  .timeline-dot {
+    left: 8px;
+    width: 16px;
+    height: 16px;
+  }
+}

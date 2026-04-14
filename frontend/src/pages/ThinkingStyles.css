@@ -1,0 +1,226 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   Thinking Styles Page
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.ts-page {
+  padding: var(--space-10) 0 var(--space-20);
+  min-height: 100vh;
+}
+
+.ts-loading,
+.ts-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 80vh;
+  text-align: center;
+  gap: var(--space-4);
+}
+
+.loading-orb {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(124, 58, 237, 0.4), transparent);
+  margin-bottom: var(--space-6);
+}
+
+/* ─── Header ──────────────────────────────────────────────────────────── */
+.ts-header {
+  text-align: center;
+  margin-bottom: var(--space-12);
+}
+
+.ts-badge {
+  display: inline-block;
+  padding: var(--space-1) var(--space-4);
+  background: var(--color-bg-glass);
+  border: 1px solid var(--color-border-accent);
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-sm);
+  color: var(--color-accent-3);
+  margin-bottom: var(--space-4);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+.ts-header h1 {
+  margin-bottom: var(--space-4);
+}
+
+.ts-subtitle {
+  max-width: 600px;
+  margin: 0 auto;
+  font-size: var(--font-size-lg);
+}
+
+/* ─── Style Cards ─────────────────────────────────────────────────────── */
+.ts-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--space-6);
+  margin-bottom: var(--space-12);
+}
+
+.ts-card {
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  padding: var(--space-8);
+  position: relative;
+  overflow: hidden;
+  transition: all var(--transition-base);
+}
+
+.ts-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--gradient-primary);
+  opacity: 0.5;
+}
+
+.ts-card:hover {
+  border-color: var(--color-border-accent);
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-glow);
+}
+
+.ts-card-primary {
+  border-color: var(--color-border-accent);
+  background: rgba(124, 58, 237, 0.08);
+}
+
+.ts-card-primary::before {
+  opacity: 1;
+  height: 4px;
+}
+
+.ts-card-rank {
+  position: absolute;
+  top: var(--space-4);
+  right: var(--space-4);
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: var(--font-size-2xl);
+  color: rgba(255, 255, 255, 0.08);
+}
+
+.ts-card-icon {
+  font-size: 2.5rem;
+  margin-bottom: var(--space-4);
+}
+
+.ts-card-name {
+  font-size: var(--font-size-xl);
+  margin-bottom: var(--space-3);
+}
+
+.ts-card-description {
+  font-size: var(--font-size-sm);
+  line-height: 1.7;
+  margin-bottom: var(--space-5);
+}
+
+/* ─── Confidence Bar ──────────────────────────────────────────────────── */
+.ts-confidence {
+  margin-bottom: var(--space-4);
+}
+
+.ts-confidence-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  margin-bottom: var(--space-2);
+}
+
+.ts-confidence-bar {
+  width: 100%;
+  height: 6px;
+  background: var(--color-bg-tertiary);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.ts-confidence-fill {
+  height: 100%;
+  background: var(--gradient-primary);
+  border-radius: var(--radius-full);
+}
+
+/* ─── Domain Tags ─────────────────────────────────────────────────────── */
+.ts-domains {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.ts-domain-tag {
+  padding: var(--space-1) var(--space-3);
+  border: 1px solid;
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+}
+
+/* ─── Scores Preview ──────────────────────────────────────────────────── */
+.ts-scores-preview {
+  margin-bottom: var(--space-10);
+}
+
+.ts-score-bars {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.ts-score-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.ts-score-label {
+  min-width: 130px;
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+}
+
+.ts-score-track {
+  flex: 1;
+  height: 8px;
+  background: var(--color-bg-tertiary);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.ts-score-fill {
+  height: 100%;
+  border-radius: var(--radius-full);
+}
+
+.ts-score-value {
+  min-width: 40px;
+  text-align: right;
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--color-text-muted);
+}
+
+/* ─── CTA ─────────────────────────────────────────────────────────────── */
+.ts-cta {
+  text-align: center;
+  margin-top: var(--space-10);
+}
+
+@media (max-width: 768px) {
+  .ts-cards {
+    grid-template-columns: 1fr;
+  }
+}
