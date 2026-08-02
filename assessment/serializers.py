@@ -3,7 +3,7 @@
 from rest_framework import serializers
 from .models import (
     AssessmentSession, ActivityResponse, DomainScore,
-    ThinkingStyle, ValidationResponse,
+    ThinkingStyle, ValidationResponse, DeepDiveChat,
 )
 
 
@@ -126,3 +126,35 @@ class ResultsSerializer(serializers.Serializer):
     domain_scores = DomainScoreSerializer()
     thinking_styles = ThinkingStyleSerializer(many=True)
     session = AssessmentSessionSerializer()
+
+
+# ─── Deep Dive Chat Serializers ──────────────────────────────────────────────
+
+
+class DeepDiveChatSerializer(serializers.ModelSerializer):
+    """Read serializer for the deep-dive chat state."""
+
+    class Meta:
+        model = DeepDiveChat
+        fields = [
+            'domain', 'status', 'transcript',
+            'roadmap_annotations', 'ai_turn_count', 'user_turn_count',
+            'created_at', 'updated_at',
+        ]
+        read_only_fields = fields
+
+
+class DeepDiveMessageSerializer(serializers.Serializer):
+    """Validates incoming user messages. Enforces ~60 word hard cap."""
+    content = serializers.CharField(max_length=2000)  # char limit as safety net
+
+    def validate_content(self, value):
+        text = value.strip()
+        if not text:
+            raise serializers.ValidationError("Message cannot be empty.")
+        word_count = len(text.split())
+        if word_count > 60:
+            raise serializers.ValidationError(
+                f"Message too long ({word_count} words). Please keep it under 60 words."
+            )
+        return text

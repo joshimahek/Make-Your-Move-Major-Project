@@ -37,6 +37,13 @@ api.interceptors.request.use((config) => {
 
 /* ═══ API Functions ═══ */
 
+export const authAPI = {
+  register: (data) => api.post('/auth/register/', data),
+  login: (data) => api.post('/auth/login/', data),
+  logout: () => api.post('/auth/logout/'),
+  me: () => api.get('/auth/me/'),
+};
+
 export const sessionAPI = {
   start: () => api.post('/session/start/'),
   get: () => api.get('/session/'),
@@ -55,6 +62,16 @@ export const assessmentAPI = {
     api.post(`/validation/${domain}/submit/`, data),
   getResults: () => api.get('/results/'),
   getRoadmap: (domain) => api.get(`/roadmap/${domain}/`),
+};
+
+export const deepDiveAPI = {
+  start: (domain) => api.post(`/deep-dive/${domain}/start/`),
+  sendMessage: (domain, data) => api.post(`/deep-dive/${domain}/message/`, data),
+  skip: (domain) => api.post(`/deep-dive/${domain}/skip/`),
+};
+
+export const analyticsAPI = {
+  get: () => api.get('/analytics/'),
 };
 
 export default api;

@@ -151,8 +151,42 @@ export default function Roadmap() {
           })}
         </div>
 
-        {/* AI notes placeholder */}
-        {roadmap.ai_notes && (
+        {/* Gemini Deep-Dive Annotations */}
+        {roadmap.annotations && roadmap.annotations.length > 0 && (
+          <motion.div
+            className="roadmap-annotations glass-card"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 1.5 }}
+            style={{ borderLeft: `3px solid ${domainColor}` }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', marginBottom: 'var(--space-4)' }}>
+              <span style={{ fontSize: '1.5rem' }}>✨</span>
+              <h4 style={{ margin: 0, color: domainColor }}>Personalised for You</h4>
+            </div>
+            {roadmap.annotations.map((note, i) => (
+              <motion.p
+                key={i}
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 1.7 + i * 0.15 }}
+                style={{
+                  color: 'var(--color-text-secondary)',
+                  padding: 'var(--space-3) 0',
+                  borderBottom: i < roadmap.annotations.length - 1 ? '1px solid var(--color-border)' : 'none',
+                  margin: 0,
+                  fontSize: 'var(--font-size-sm)',
+                  lineHeight: 1.7,
+                }}
+              >
+                💡 {note}
+              </motion.p>
+            ))}
+          </motion.div>
+        )}
+
+        {/* Fallback AI note if no deep-dive was completed */}
+        {(!roadmap.annotations || roadmap.annotations.length === 0) && roadmap.ai_notes && (
           <motion.div
             className="roadmap-ai-note glass-card"
             initial={{ opacity: 0, y: 20 }}

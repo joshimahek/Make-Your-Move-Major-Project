@@ -1,25 +1,32 @@
 /**
- * Signup Page
+ * Signup Page — wired to Django auth backend.
  */
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate, Link } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 export default function Signup() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
   const navigate = useNavigate();
+  const { register } = useAuth();
 
   const handleSignup = async (e) => {
     e.preventDefault();
     setLoading(true);
-    // Simulate API call for now
-    setTimeout(() => {
+    setError('');
+    try {
+      await register(name, email, password);
+      navigate('/context');
+    } catch (err) {
+      setError(err.message || 'Registration failed. Please try again.');
+    } finally {
       setLoading(false);
-      navigate('/context'); // redirect to start assessment
-    }, 1000);
+    }
   };
 
   return (
@@ -36,6 +43,20 @@ export default function Signup() {
           <h2 className="gradient-text-vibrant" style={{ marginBottom: 'var(--space-2)' }}>Create Account</h2>
           <p>Join to save your results and personalized roadmap.</p>
         </div>
+
+        {error && (
+          <div style={{
+            background: 'rgba(239, 68, 68, 0.15)',
+            border: '1px solid rgba(239, 68, 68, 0.3)',
+            borderRadius: 'var(--radius-md)',
+            padding: 'var(--space-3) var(--space-4)',
+            marginBottom: 'var(--space-4)',
+            color: '#fca5a5',
+            fontSize: 'var(--font-size-sm)',
+          }}>
+            {error}
+          </div>
+        )}
 
         <form onSubmit={handleSignup} className="flex flex-col gap-6">
           <div className="flex flex-col gap-2">
@@ -99,6 +120,7 @@ export default function Signup() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
+              minLength={6}
               style={{
                 width: '100%',
                 padding: 'var(--space-3) var(--space-4)',
@@ -111,6 +133,9 @@ export default function Signup() {
               onFocus={(e) => (e.target.style.borderColor = 'var(--color-accent-2)')}
               onBlur={(e) => (e.target.style.borderColor = 'var(--color-border)')}
             />
+            <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)' }}>
+              At least 6 characters
+            </span>
           </div>
 
           <motion.button

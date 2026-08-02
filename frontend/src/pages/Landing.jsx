@@ -5,6 +5,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence, useInView } from 'framer-motion';
 import { useAssessment } from '../context/AssessmentContext';
+import { useAuth } from '../context/AuthContext';
 import './Landing.css';
 
 /* ═══ Data ═══ */
@@ -122,6 +123,7 @@ function FAQItem({ q, a, isOpen, onClick }) {
 export default function Landing() {
   const navigate = useNavigate();
   const { startSession, session, hydrated, activityOrder, completedActivities } = useAssessment();
+  const { isAuthenticated, logout } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [activeDomain, setActiveDomain] = useState(0);
@@ -146,12 +148,21 @@ export default function Landing() {
   }, []);
 
   const handleStart = async () => {
+    if (!isAuthenticated) {
+      navigate('/login');
+      return;
+    }
     try {
       await startSession();
       navigate('/context');
     } catch (err) {
       console.error('Failed to start session:', err);
     }
+  };
+
+  const handleLogout = async () => {
+    await logout();
+    navigate('/');
   };
 
   const handleContinue = () => {
@@ -191,7 +202,11 @@ export default function Landing() {
           </div>
 
           <div className="nav-actions">
-            <Link to="/login" className="nav-link">Sign In</Link>
+            {isAuthenticated ? (
+              <button className="nav-link" onClick={handleLogout} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>Logout</button>
+            ) : (
+              <Link to="/login" className="nav-link">Sign In</Link>
+            )}
             <button className="btn btn-primary btn-sm nav-cta" onClick={hasActiveSession ? handleContinue : handleStart}>
               {hasActiveSession ? 'Continue' : 'Get Started'}
             </button>
@@ -221,7 +236,11 @@ export default function Landing() {
               <button className="mobile-menu-link" onClick={() => scrollToSection('domains')}>Domains</button>
               <button className="mobile-menu-link" onClick={() => scrollToSection('how-it-works')}>How It Works</button>
               <button className="mobile-menu-link" onClick={() => scrollToSection('faq')}>FAQ</button>
-              <Link to="/login" className="mobile-menu-link" onClick={() => setMobileMenuOpen(false)}>Sign In</Link>
+              {isAuthenticated ? (
+                <button className="mobile-menu-link" onClick={() => { setMobileMenuOpen(false); handleLogout(); }}>Logout</button>
+              ) : (
+                <Link to="/login" className="mobile-menu-link" onClick={() => setMobileMenuOpen(false)}>Sign In</Link>
+              )}
               <button className="btn btn-primary" style={{ width: '100%', marginTop: 'var(--space-2)' }} onClick={hasActiveSession ? handleContinue : handleStart}>
                 {hasActiveSession ? 'Continue Assessment' : 'Get Started Free'}
               </button>
@@ -293,13 +312,15 @@ export default function Landing() {
                     <span className="cta-arrow">→</span>
                   </button>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)', alignItems: 'center' }}>
-                    <span className="cta-meta">Takes ~15 minutes • No sign-up needed</span>
-                    <span className="cta-meta" style={{ fontSize: 'var(--font-size-sm)' }}>
-                      Already have an account?{' '}
-                      <Link to="/login" style={{ color: 'var(--color-accent-2)', fontWeight: 600 }}>
-                        Sign in
-                      </Link>
-                    </span>
+                    <span className="cta-meta">Takes ~15 minutes • Free forever</span>
+                    {!isAuthenticated && (
+                      <span className="cta-meta" style={{ fontSize: 'var(--font-size-sm)' }}>
+                        Already have an account?{' '}
+                        <Link to="/login" style={{ color: 'var(--color-accent-2)', fontWeight: 600 }}>
+                          Sign in
+                        </Link>
+                      </span>
+                    )}
                   </div>
                 </>
               )}

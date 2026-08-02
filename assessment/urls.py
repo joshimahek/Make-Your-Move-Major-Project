@@ -2,10 +2,18 @@
 
 from django.urls import path
 from . import views
+from . import auth_views
+from . import analytics_views
 
 app_name = 'assessment'
 
 urlpatterns = [
+    # Authentication
+    path('auth/register/', auth_views.register, name='register'),
+    path('auth/login/', auth_views.login_view, name='login'),
+    path('auth/logout/', auth_views.logout_view, name='logout'),
+    path('auth/me/', auth_views.me, name='me'),
+
     # Session management
     path('session/start/', views.start_session, name='start-session'),
     path('session/', views.get_session, name='get-session'),
@@ -28,4 +36,13 @@ urlpatterns = [
 
     # Roadmap
     path('roadmap/<str:domain>/', views.get_roadmap, name='roadmap'),
+
+    # Deep-Dive Chat
+    path('deep-dive/<str:domain>/start/', views.start_deep_dive, name='start-deep-dive'),
+    path('deep-dive/<str:domain>/message/', views.send_deep_dive_message, name='deep-dive-message'),
+    path('deep-dive/<str:domain>/skip/', views.skip_deep_dive, name='skip-deep-dive'),
+
+    # Analytics (admin only)
+    path('analytics/', analytics_views.get_analytics, name='analytics'),
 ]
+

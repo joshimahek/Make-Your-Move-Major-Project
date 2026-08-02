@@ -1,4 +1,5 @@
 import uuid
+from django.conf import settings
 from django.db import models
 
 
@@ -15,6 +16,13 @@ class AssessmentSession(models.Model):
     ]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='sessions',
+        null=True,
+        blank=True,
+    )
     session_key = models.CharField(max_length=40, db_index=True, blank=True, null=True)
     current_stage = models.CharField(max_length=20, choices=STAGE_CHOICES, default='context_intake')
     current_activity = models.IntegerField(default=0)  # 0 = not started, 1-6 = activity number
@@ -183,3 +191,46 @@ class ValidationResponse(models.Model):
 
     def __str__(self):
         return f"Validation {self.domain} - {self.session_id}"
+
+
+class DeepDiveChat(models.Model):
+    """
+    Stores conversational deep-dive transcripts.
+
+    Data isolation: transcripts are NEVER passed to the Stage 2/4/5 scoring
+    pipeline. They only influence roadmap annotation language.
+    """
+
+    STATUS_CHOICES = [
+        ('in_progress', 'In Progress'),
+        ('completed', 'Completed'),
+        ('skipped', 'Skipped'),
+        ('terminated', 'Terminated'),  # hostile / inappropriate
+    ]
+
+    session = models.ForeignKey(
+        AssessmentSession,
+        on_delete=models.CASCADE,
+        related_name='deep_dive_chats',
+    )
+    domain = models.CharField(max_length=20, help_text="Which domain bubble triggered this chat")
+    status = models.CharField(max_length=15, choices=STATUS_CHOICES, default='in_progress')
+
+    # Ordered list of {role: 'ai'|'user', content: str, turn: int}
+    transcript = models.JSONField(default=list, help_text="Chat transcript as ordered message list")
+
+    # Gemini-generated annotations for roadmap enrichment
+    roadmap_annotations = models.JSONField(default=list, help_text="Personalized roadmap annotation strings")
+
+    ai_turn_count = models.IntegerField(default=0)
+    user_turn_count = models.IntegerField(default=0)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ['session', 'domain']  # One chat per domain per session
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"DeepDive {self.domain} - {self.session_id} ({self.status})"

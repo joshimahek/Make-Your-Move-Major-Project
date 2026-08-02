@@ -219,7 +219,7 @@ export default function Results() {
                 <motion.button
                   key={domain}
                   className="roadmap-card glass-card"
-                  onClick={() => navigate(`/roadmap/${domain}`)}
+                  onClick={() => navigate(`/deep-dive/${domain}`)}
                   whileHover={{ scale: 1.03, y: -4 }}
                   whileTap={{ scale: 0.98 }}
                 >

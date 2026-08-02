@@ -3,7 +3,7 @@
 from django.contrib import admin
 from .models import (
     AssessmentSession, ActivityResponse, DomainScore,
-    ThinkingStyle, ValidationResponse,
+    ThinkingStyle, ValidationResponse, DeepDiveChat,
 )
 
 
@@ -28,12 +28,18 @@ class ValidationResponseInline(admin.TabularInline):
     extra = 0
 
 
+class DeepDiveChatInline(admin.TabularInline):
+    model = DeepDiveChat
+    extra = 0
+    readonly_fields = ['domain', 'status', 'ai_turn_count', 'user_turn_count']
+
+
 @admin.register(AssessmentSession)
 class AssessmentSessionAdmin(admin.ModelAdmin):
-    list_display = ['id', 'current_stage', 'current_activity', 'year_of_study', 'created_at']
+    list_display = ['id', 'user', 'current_stage', 'current_activity', 'year_of_study', 'created_at']
     list_filter = ['current_stage', 'year_of_study', 'prior_experience', 'goal']
-    search_fields = ['id']
-    inlines = [ActivityResponseInline, DomainScoreInline, ThinkingStyleInline, ValidationResponseInline]
+    search_fields = ['id', 'user__email', 'user__first_name']
+    inlines = [ActivityResponseInline, DomainScoreInline, ThinkingStyleInline, ValidationResponseInline, DeepDiveChatInline]
     readonly_fields = ['id', 'created_at', 'updated_at']
 
 
