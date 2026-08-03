@@ -16,7 +16,13 @@ SECRET_KEY = os.getenv(
     "SECRET_KEY",
     "django-insecure-change-this-in-production"
 )
+CORS_ALLOWED_ORIGINS = [
+    "https://make-your-move-major-project.vercel.app/",
+]
 
+CSRF_TRUSTED_ORIGINS = [
+    "https://make-your-move-major-project.vercel.app/",
+]
 DEBUG = os.getenv("DEBUG", "True") == "True"
 
 ALLOWED_HOSTS = os.getenv(
