@@ -70,7 +70,7 @@ WSGI_APPLICATION = 'DJP.wsgi.application'
 
 
 # Database - PostgreSQL
-<<<<<<< HEAD
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
@@ -82,7 +82,7 @@ DATABASES = {
     }
 }
 
-=======
+
 
 print("Before DATABASES:")
 print("DB_NAME =", os.environ.get("DB_NAME"))
@@ -104,7 +104,7 @@ DATABASES = {
 
 print("After DATABASES:")
 print(DATABASES)
->>>>>>> 6859dd9 (Initial Django backend)
+
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
