@@ -13,26 +13,6 @@ const api = axios.create({
   },
 });
 
-// Get CSRF token from cookie
-function getCSRFToken() {
-  const name = 'csrftoken';
-  const cookies = document.cookie.split(';');
-  for (let cookie of cookies) {
-    cookie = cookie.trim();
-    if (cookie.startsWith(name + '=')) {
-      return cookie.substring(name.length + 1);
-    }
-  }
-  return '';
-}
-
-// Add CSRF token to mutating requests
-api.interceptors.request.use((config) => {
-  if (['post', 'put', 'patch', 'delete'].includes(config.method)) {
-    config.headers['X-CSRFToken'] = getCSRFToken();
-  }
-  return config;
-});
 
 /* ═══ API Functions ═══ */
 
