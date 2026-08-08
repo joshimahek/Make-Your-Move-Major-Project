@@ -16,6 +16,17 @@ SECRET_KEY = os.getenv(
     "SECRET_KEY",
     "django-insecure-change-this-in-production"
 )
+
+# CORS
+CORS_ALLOWED_ORIGINS = [
+    "https://make-your-move-major-project.vercel.app",
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+]
+
+CORS_ALLOW_CREDENTIALS = True
+
+
 # CSRF
 CSRF_TRUSTED_ORIGINS = [
     "https://make-your-move-major-project.vercel.app",
@@ -23,6 +34,13 @@ CSRF_TRUSTED_ORIGINS = [
     "http://127.0.0.1:5173",
 ]
 
+
+# Session cookies - required for Vercel → Render
+SESSION_COOKIE_SAMESITE = "None"
+SESSION_COOKIE_SECURE = True
+
+CSRF_COOKIE_SAMESITE = "None"
+CSRF_COOKIE_SECURE = True
 # Production session/cookie settings
 SESSION_COOKIE_SAMESITE = "None"
 SESSION_COOKIE_SECURE = True
@@ -59,7 +77,6 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
-
     "whitenoise.middleware.WhiteNoiseMiddleware",
 
     "django.contrib.sessions.middleware.SessionMiddleware",
