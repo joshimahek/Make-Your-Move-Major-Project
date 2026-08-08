@@ -16,13 +16,20 @@ SECRET_KEY = os.getenv(
     "SECRET_KEY",
     "django-insecure-change-this-in-production"
 )
-CORS_ALLOWED_ORIGINS = [
-    "https://make-your-move-major-project.vercel.app/",
+# CSRF
+CSRF_TRUSTED_ORIGINS = [
+    "https://make-your-move-major-project.vercel.app",
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
 ]
 
-CSRF_TRUSTED_ORIGINS = [
-    "https://make-your-move-major-project.vercel.app/",
-]
+# Production session/cookie settings
+SESSION_COOKIE_SAMESITE = "None"
+SESSION_COOKIE_SECURE = True
+
+CSRF_COOKIE_SAMESITE = "None"
+CSRF_COOKIE_SECURE = True
+SESSION_COOKIE_HTTPONLY = True
 DEBUG = os.getenv("DEBUG", "True") == "True"
 
 ALLOWED_HOSTS = os.getenv(
