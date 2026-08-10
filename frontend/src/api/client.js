@@ -11,6 +11,10 @@ const api = axios.create({
   },
 });
 
+/* =========================================================
+   CSRF
+   ========================================================= */
+
 function getCSRFTokenFromCookie() {
   const cookies = document.cookie.split(';');
 
@@ -32,12 +36,17 @@ async function ensureCSRFToken() {
   return getCSRFTokenFromCookie();
 }
 
+/*
+ * Add the CURRENT CSRF cookie value to every
+ * POST / PUT / PATCH / DELETE request.
+ */
 api.interceptors.request.use(async (config) => {
   const method = config.method?.toLowerCase();
 
   if (['post', 'put', 'patch', 'delete'].includes(method)) {
     let token = getCSRFTokenFromCookie();
 
+    // If there is no CSRF cookie yet, ask Django to create one.
     if (!token) {
       token = await ensureCSRFToken();
     }
@@ -50,7 +59,9 @@ api.interceptors.request.use(async (config) => {
   return config;
 });
 
-/* AUTH */
+/* =========================================================
+   AUTH
+   ========================================================= */
 
 export const authAPI = {
   register: (data) =>
@@ -66,7 +77,9 @@ export const authAPI = {
     api.get('/auth/me/'),
 };
 
-/* SESSION */
+/* =========================================================
+   SESSION
+   ========================================================= */
 
 export const sessionAPI = {
   start: () =>
@@ -82,7 +95,9 @@ export const sessionAPI = {
     api.post('/session/context/', data),
 };
 
-/* ACTIVITIES */
+/* =========================================================
+   ACTIVITIES
+   ========================================================= */
 
 export const activityAPI = {
   submit: (activityNumber, data) =>
@@ -92,7 +107,9 @@ export const activityAPI = {
     ),
 };
 
-/* ASSESSMENT */
+/* =========================================================
+   ASSESSMENT
+   ========================================================= */
 
 export const assessmentAPI = {
   getThinkingStyles: () =>
@@ -111,7 +128,9 @@ export const assessmentAPI = {
     api.get(`/roadmap/${domain}/`),
 };
 
-/* DEEP DIVE */
+/* =========================================================
+   DEEP DIVE
+   ========================================================= */
 
 export const deepDiveAPI = {
   start: (domain) =>
@@ -127,7 +146,9 @@ export const deepDiveAPI = {
     api.post(`/deep-dive/${domain}/skip/`),
 };
 
-/* ANALYTICS */
+/* =========================================================
+   ANALYTICS
+   ========================================================= */
 
 export const analyticsAPI = {
   get: () =>
