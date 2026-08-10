@@ -1,8 +1,3 @@
-/**
- * Axios API client configured for Django backend.
- * Handles CSRF tokens and session cookies.
- */
-
 import axios from 'axios';
 
 const API_BASE =
@@ -16,61 +11,46 @@ const api = axios.create({
   },
 });
 
-/**
- * Read the current CSRF token directly from the browser cookie.
- * DO NOT cache it because Django can rotate the token after login.
- */
 function getCSRFTokenFromCookie() {
-  const name = 'csrftoken=';
   const cookies = document.cookie.split(';');
 
   for (let cookie of cookies) {
     cookie = cookie.trim();
 
-    if (cookie.startsWith(name)) {
-      return decodeURIComponent(cookie.substring(name.length));
+    if (cookie.startsWith('csrftoken=')) {
+      return decodeURIComponent(
+        cookie.substring('csrftoken='.length)
+      );
     }
   }
 
   return '';
 }
 
-/**
- * Ask Django to create/set a CSRF cookie.
- */
-async function initializeCSRFToken() {
+async function ensureCSRFToken() {
   await api.get('/csrf/');
   return getCSRFTokenFromCookie();
 }
 
-/**
- * Add the CURRENT CSRF token to every mutating request.
- */
-api.interceptors.request.use(
-  async (config) => {
-    const method = config.method?.toLowerCase();
+api.interceptors.request.use(async (config) => {
+  const method = config.method?.toLowerCase();
 
-    if (['post', 'put', 'patch', 'delete'].includes(method)) {
-      let csrfToken = getCSRFTokenFromCookie();
+  if (['post', 'put', 'patch', 'delete'].includes(method)) {
+    let token = getCSRFTokenFromCookie();
 
-      // If no CSRF cookie exists, ask Django for one.
-      if (!csrfToken) {
-        csrfToken = await initializeCSRFToken();
-      }
-
-      if (csrfToken) {
-        config.headers['X-CSRFToken'] = csrfToken;
-      }
+    if (!token) {
+      token = await ensureCSRFToken();
     }
 
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
+    if (token) {
+      config.headers['X-CSRFToken'] = token;
+    }
+  }
 
-/* =========================
-   AUTH
-========================= */
+  return config;
+});
+
+/* AUTH */
 
 export const authAPI = {
   register: (data) =>
@@ -86,9 +66,7 @@ export const authAPI = {
     api.get('/auth/me/'),
 };
 
-/* =========================
-   SESSION
-========================= */
+/* SESSION */
 
 export const sessionAPI = {
   start: () =>
@@ -104,25 +82,27 @@ export const sessionAPI = {
     api.post('/session/context/', data),
 };
 
-/* =========================
-   ACTIVITIES
-========================= */
+/* ACTIVITIES */
 
 export const activityAPI = {
   submit: (activityNumber, data) =>
-    api.post(`/activity/${activityNumber}/submit/`, data),
+    api.post(
+      `/activity/${activityNumber}/submit/`,
+      data
+    ),
 };
 
-/* =========================
-   ASSESSMENT
-========================= */
+/* ASSESSMENT */
 
 export const assessmentAPI = {
   getThinkingStyles: () =>
     api.get('/thinking-styles/'),
 
   submitValidation: (domain, data) =>
-    api.post(`/validation/${domain}/submit/`, data),
+    api.post(
+      `/validation/${domain}/submit/`,
+      data
+    ),
 
   getResults: () =>
     api.get('/results/'),
@@ -131,24 +111,23 @@ export const assessmentAPI = {
     api.get(`/roadmap/${domain}/`),
 };
 
-/* =========================
-   DEEP DIVE
-========================= */
+/* DEEP DIVE */
 
 export const deepDiveAPI = {
   start: (domain) =>
     api.post(`/deep-dive/${domain}/start/`),
 
   sendMessage: (domain, data) =>
-    api.post(`/deep-dive/${domain}/message/`, data),
+    api.post(
+      `/deep-dive/${domain}/message/`,
+      data
+    ),
 
   skip: (domain) =>
     api.post(`/deep-dive/${domain}/skip/`),
 };
 
-/* =========================
-   ANALYTICS
-========================= */
+/* ANALYTICS */
 
 export const analyticsAPI = {
   get: () =>
