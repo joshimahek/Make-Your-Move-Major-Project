@@ -2,6 +2,7 @@ import { useState, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useAssessment } from '../context/AssessmentContext';
 
 export default function Signup() {
   const [name, setName] = useState('');
@@ -11,6 +12,7 @@ export default function Signup() {
   const [error, setError] = useState('');
   const navigate = useNavigate();
   const { register } = useAuth();
+  const { startSession } = useAssessment();
 
   const submittingRef = useRef(false);
 
@@ -22,6 +24,7 @@ export default function Signup() {
     setError('');
     try {
       await register(name, email, password);
+      await startSession();
       navigate('/context');
     } catch (err) {
       setError(err.message || 'Registration failed. Please try again.');
