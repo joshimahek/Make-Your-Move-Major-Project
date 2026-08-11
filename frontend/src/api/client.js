@@ -32,18 +32,9 @@ function getCSRFTokenFromCookie() {
 }
 
 /*
- * Singleton in-flight promise for /csrf/.
- *
- * Without this, two requests firing back-to-back (e.g. login
- * immediately followed by a session call) can each see "no cookie
- * yet", each independently call GET /csrf/, and each get back a
- * DIFFERENT csrf secret from Django. Whichever response lands last
- * wins the browser's cookie jar — the other request already grabbed
- * a token that no longer matches anything, and gets rejected with
- * "CSRF token ... incorrect".
- *
- * By sharing one in-flight fetch, every caller waits on the same
- * request and reads the same resulting cookie.
+ * Singleton in-flight promise for /csrf/. Prevents two concurrent
+ * "no cookie yet" callers from each independently fetching a
+ * different csrf secret.
  */
 let csrfFetchPromise = null;
 
@@ -63,22 +54,26 @@ async function ensureCSRFToken() {
 
 /*
  * Serialize all mutating (POST/PUT/PATCH/DELETE) requests through a
- * shared tail promise.
+ * queue that blocks on the FULL request/response round trip — not
+ * just on reading/attaching the CSRF token.
  *
- * Why this matters beyond ensureCSRFToken(): Django's login() call
- * ROTATES the CSRF token as a deliberate anti session-fixation
- * measure. If your app code fires a second mutating request before
- * awaiting the login response (or in parallel with it, e.g. via
- * Promise.all or a fire-and-forget call in a useEffect), that second
- * request's interceptor can read the cookie BEFORE the browser has
- * applied the new Set-Cookie from login's response — attaching an
- * already-rotated-out token.
+ * This matters because Django's login()/register() ROTATE the CSRF
+ * token as an anti session-fixation measure, and that rotation is
+ * only guaranteed to be applied to the browser's cookie jar once the
+ * response has actually been received. A queue that only serializes
+ * "who reads the cookie first" (the previous version of this file)
+ * still lets a second mutating request start while the first one is
+ * still in flight — it just moves the race slightly later without
+ * closing it.
  *
- * Chaining every mutating request onto one queue forces them to run
- * strictly one at a time, in the order they were issued, so each one
- * always reads the cookie state left behind by the previous one.
+ * Implementation: each mutating request installs a new "tail" promise
+ * in `queueTail`, that IT owns the resolution of. The next mutating
+ * request awaits the PREVIOUS tail before it's even allowed to read
+ * the CSRF cookie. The current request's tail is only resolved from
+ * the response (or error) interceptor — i.e. once the round trip,
+ * including the browser applying any rotated Set-Cookie, is done.
  */
-let requestQueue = Promise.resolve();
+let queueTail = Promise.resolve();
 
 api.interceptors.request.use((config) => {
   const method = config.method?.toLowerCase();
@@ -87,33 +82,51 @@ api.interceptors.request.use((config) => {
     return config;
   }
 
-  const attachToken = async () => {
-    const token = await ensureCSRFToken();
-    if (token) {
-      config.headers['X-CSRFToken'] = token;
-    }
-    return config;
-  };
+  const previousTail = queueTail;
+  let releaseQueue;
+  queueTail = new Promise((resolve) => {
+    releaseQueue = resolve;
+  });
+  // Stashed on the config so the response/error interceptor (which
+  // runs after the network round trip completes) can release the
+  // next request in line.
+  config.__releaseQueue = releaseQueue;
 
-  // Chain onto the queue regardless of whether the previous entry
-  // succeeded or failed, so one rejected request can't wedge the
-  // queue for everything after it.
-  const next = requestQueue.then(attachToken, attachToken);
-  requestQueue = next.then(
-    () => undefined,
-    () => undefined
-  );
-
-  return next;
+  return previousTail
+    .then(() => ensureCSRFToken())
+    .then((token) => {
+      if (token) {
+        config.headers['X-CSRFToken'] = token;
+      }
+      return config;
+    })
+    .catch((err) => {
+      // Attaching the token itself failed (e.g. the /csrf/ priming
+      // call failed) — this request never reaches the network, so
+      // the response interceptor never fires for it. Release the
+      // queue here instead, or every subsequent mutating request
+      // wedges forever.
+      releaseQueue();
+      throw err;
+    });
 });
 
+api.interceptors.response.use(
+  (response) => {
+    response.config.__releaseQueue?.();
+    return response;
+  },
+  (error) => {
+    error.config?.__releaseQueue?.();
+    return Promise.reject(error);
+  }
+);
+
 /*
- * Call this once, early, on app startup (e.g. in main.jsx before
- * rendering, or in a top-level auth-check effect) to prime the CSRF
- * cookie before any mutating requests exist to race each other.
- * Not required for correctness now that requests are queued and
- * ensureCSRFToken() is a singleton, but it removes the very first
- * cold-start round trip from the critical path.
+ * Optional: call once, early, to remove the very first cold-start
+ * /csrf/ round trip from the critical path. Not required for
+ * correctness — ensureCSRFToken() + the queue above handle it lazily
+ * either way.
  */
 export async function primeCSRF() {
   await ensureCSRFToken();
