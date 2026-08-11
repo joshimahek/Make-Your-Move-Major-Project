@@ -3,6 +3,11 @@ import axios from 'axios';
 const API_BASE =
   'https://make-your-move-backend.onrender.com/api';
 
+/*
+ * Main API client
+ * Frontend: Vercel
+ * Backend: Render
+ */
 const api = axios.create({
   baseURL: API_BASE,
   withCredentials: true,
@@ -11,174 +16,210 @@ const api = axios.create({
   },
 });
 
-/* =========================================================
-   CSRF
-   ========================================================= */
-
-function getCSRFTokenFromCookie() {
-  const cookies = document.cookie.split(';');
-
-  for (let cookie of cookies) {
-    cookie = cookie.trim();
-
-    if (cookie.startsWith('csrftoken=')) {
-      return decodeURIComponent(
-        cookie.substring('csrftoken='.length)
-      );
-    }
-  }
-
-  return '';
-}
-
 /*
- * Singleton in-flight promise for /csrf/. Prevents two concurrent
- * "no cookie yet" callers from each independently fetching a
- * different csrf secret.
- */
-let csrfFetchPromise = null;
-
-async function ensureCSRFToken() {
-  const existing = getCSRFTokenFromCookie();
-  if (existing) return existing;
-
-  if (!csrfFetchPromise) {
-    csrfFetchPromise = api.get('/csrf/').finally(() => {
-      csrfFetchPromise = null;
-    });
-  }
-
-  await csrfFetchPromise;
-  return getCSRFTokenFromCookie();
-}
-
-/*
- * Serialize all mutating (POST/PUT/PATCH/DELETE) requests through a
- * queue that blocks on the FULL request/response round trip — not
- * just on reading/attaching the CSRF token. Django's login()/
- * register() rotate the CSRF token server-side; that rotation is
- * only reflected in the browser's cookie jar once the response has
- * actually landed, so the next mutating request must wait for that,
- * not just for "a token was read."
- */
-let queueTail = Promise.resolve();
-
-/*
- * In-flight de-duplication for mutating requests.
+ * Separate client used only for obtaining CSRF tokens.
  *
- * Root cause of "register/login fires twice, one 403 one succeeds":
- * a submit button's `disabled={loading}` only takes effect after a
- * React re-render, so a fast double-click / double-tap / double-Enter
- * can invoke the same handler twice before the button visually
- * disables. Both calls independently reach client.js and both fire a
- * real network request. Whichever response's Set-Cookie lands last in
- * the browser silently "wins" the cookie jar — the other request's
- * CSRF/session state is now stale, and it fails.
+ * IMPORTANT:
+ * We cannot use document.cookie here because the frontend
+ * is hosted on Vercel while the CSRF cookie belongs to Render.
  *
- * Fix: key in-flight mutating requests by method+url+body. If an
- * identical request is already in flight, return that SAME promise
- * instead of issuing a second network call. This makes duplicate
- * fires a no-op at the network layer, regardless of which button,
- * effect, or page triggered the duplicate — it doesn't rely on every
- * page remembering to add its own guard.
+ * Therefore we use the token returned directly by:
+ * GET /api/csrf/
  */
-const inFlightRequests = new Map();
-
-function requestKey(config) {
-  const body =
-    typeof config.data === 'string'
-      ? config.data
-      : JSON.stringify(config.data ?? '');
-  return `${config.method}:${config.url}:${body}`;
-}
-
-api.interceptors.request.use((config) => {
-  const method = config.method?.toLowerCase();
-
-  if (!['post', 'put', 'patch', 'delete'].includes(method)) {
-    return config;
-  }
-
-  const key = requestKey(config);
-  const existing = inFlightRequests.get(key);
-  if (existing) {
-    // An identical request is already in flight — piggyback on it
-    // instead of sending a duplicate. Mark this config so axios
-    // knows to short-circuit (handled below via adapter override).
-    config.adapter = () => existing;
-    return config;
-  }
-
-  const previousTail = queueTail;
-  let releaseQueue;
-  queueTail = new Promise((resolve) => {
-    releaseQueue = resolve;
-  });
-  config.__releaseQueue = releaseQueue;
-  config.__requestKey = key;
-
-  return previousTail
-    .then(() => ensureCSRFToken())
-    .then((token) => {
-      if (token) {
-        config.headers['X-CSRFToken'] = token;
-      }
-      return config;
-    })
-    .catch((err) => {
-      releaseQueue();
-      throw err;
-    });
+const csrfApi = axios.create({
+  baseURL: API_BASE,
+  withCredentials: true,
 });
 
+let csrfToken = '';
+let csrfRequest = null;
+
+/*
+ * Get a fresh CSRF token from Django.
+ *
+ * Singleton promise prevents multiple simultaneous requests
+ * from requesting different CSRF tokens at the same time.
+ */
+async function refreshCSRFToken() {
+  if (!csrfRequest) {
+    csrfRequest = csrfApi
+      .get('/csrf/')
+      .then((response) => {
+        csrfToken = response.data.csrfToken || '';
+        return csrfToken;
+      })
+      .finally(() => {
+        csrfRequest = null;
+      });
+  }
+
+  return csrfRequest;
+}
+
+/*
+ * Get the currently known CSRF token.
+ * If we don't have one yet, ask Django for one.
+ */
+async function getCSRFToken() {
+  if (csrfToken) {
+    return csrfToken;
+  }
+
+  return refreshCSRFToken();
+}
+
+/*
+ * Add CSRF token to every unsafe request.
+ */
+api.interceptors.request.use(async (config) => {
+  const method = config.method?.toLowerCase();
+
+  if (
+    ['post', 'put', 'patch', 'delete'].includes(method)
+  ) {
+    const token = await getCSRFToken();
+
+    config.headers = config.headers || {};
+
+    if (token) {
+      config.headers['X-CSRFToken'] = token;
+    }
+  }
+
+  return config;
+});
+
+/*
+ * If Django rejects a request because the CSRF token is stale,
+ * get a completely fresh token and retry the request ONCE.
+ *
+ * This handles the token rotation that happens after login/register.
+ */
 api.interceptors.response.use(
-  (response) => {
-    response.config.__releaseQueue?.();
-    if (response.config.__requestKey) {
-      inFlightRequests.delete(response.config.__requestKey);
+  (response) => response,
+
+  async (error) => {
+    const originalRequest = error.config;
+
+    const status = error.response?.status;
+    const detail = error.response?.data?.detail || '';
+
+    const isCSRFError =
+      status === 403 &&
+      typeof detail === 'string' &&
+      detail.toLowerCase().includes('csrf');
+
+    if (
+      isCSRFError &&
+      originalRequest &&
+      !originalRequest._csrfRetry
+    ) {
+      originalRequest._csrfRetry = true;
+
+      try {
+        /*
+         * Throw away the old token.
+         */
+        csrfToken = '';
+
+        /*
+         * Ask Django for the current token.
+         */
+        const newToken = await refreshCSRFToken();
+
+        originalRequest.headers =
+          originalRequest.headers || {};
+
+        originalRequest.headers['X-CSRFToken'] = newToken;
+
+        /*
+         * Retry the original request once.
+         */
+        return api.request(originalRequest);
+      } catch (refreshError) {
+        return Promise.reject(error);
+      }
     }
-    return response;
-  },
-  (error) => {
-    error.config?.__releaseQueue?.();
-    if (error.config?.__requestKey) {
-      inFlightRequests.delete(error.config.__requestKey);
-    }
+
     return Promise.reject(error);
   }
 );
 
-export async function primeCSRF() {
-  await ensureCSRFToken();
-}
 
 /* =========================================================
    AUTH
    ========================================================= */
 
 export const authAPI = {
-  register: (data) =>
-    trackInFlight('post', '/auth/register/', data, () =>
-      api.post('/auth/register/', data)
-    ),
 
-  login: (data) =>
-    trackInFlight('post', '/auth/login/', data, () =>
-      api.post('/auth/login/', data)
-    ),
+  register: async (data) => {
+    const response = await api.post(
+      '/auth/register/',
+      data
+    );
 
-  logout: () =>
-    api.post('/auth/logout/'),
+    /*
+     * Django register() automatically logs the user in.
+     * login() rotates the CSRF token.
+     *
+     * Get the new token before any context/session request.
+     */
+    csrfToken = '';
+    await refreshCSRFToken();
+
+    return response;
+  },
+
+  login: async (data) => {
+    const response = await api.post(
+      '/auth/login/',
+      data
+    );
+
+    /*
+     * Django login() rotates the CSRF token.
+     */
+    csrfToken = '';
+    await refreshCSRFToken();
+
+    return response;
+  },
+
+  logout: async () => {
+    /*
+     * Ensure logout uses the current token.
+     */
+    const token = await getCSRFToken();
+
+    const response = await api.post(
+      '/auth/logout/',
+      {},
+      {
+        headers: {
+          'X-CSRFToken': token,
+        },
+      }
+    );
+
+    /*
+     * Clear our local copy.
+     */
+    csrfToken = '';
+
+    return response;
+  },
 
   me: () =>
     api.get('/auth/me/'),
 };
+
 
 /* =========================================================
    SESSION
    ========================================================= */
 
 export const sessionAPI = {
+
   start: () =>
     api.post('/session/start/'),
 
@@ -189,16 +230,16 @@ export const sessionAPI = {
     api.post('/session/reset/'),
 
   submitContext: (data) =>
-    trackInFlight('post', '/session/context/', data, () =>
-      api.post('/session/context/', data)
-    ),
+    api.post('/session/context/', data),
 };
+
 
 /* =========================================================
    ACTIVITIES
    ========================================================= */
 
 export const activityAPI = {
+
   submit: (activityNumber, data) =>
     api.post(
       `/activity/${activityNumber}/submit/`,
@@ -206,11 +247,13 @@ export const activityAPI = {
     ),
 };
 
+
 /* =========================================================
    ASSESSMENT
    ========================================================= */
 
 export const assessmentAPI = {
+
   getThinkingStyles: () =>
     api.get('/thinking-styles/'),
 
@@ -227,13 +270,17 @@ export const assessmentAPI = {
     api.get(`/roadmap/${domain}/`),
 };
 
+
 /* =========================================================
    DEEP DIVE
    ========================================================= */
 
 export const deepDiveAPI = {
+
   start: (domain) =>
-    api.post(`/deep-dive/${domain}/start/`),
+    api.post(
+      `/deep-dive/${domain}/start/`
+    ),
 
   sendMessage: (domain, data) =>
     api.post(
@@ -242,39 +289,21 @@ export const deepDiveAPI = {
     ),
 
   skip: (domain) =>
-    api.post(`/deep-dive/${domain}/skip/`),
+    api.post(
+      `/deep-dive/${domain}/skip/`
+    ),
 };
+
 
 /* =========================================================
    ANALYTICS
    ========================================================= */
 
 export const analyticsAPI = {
+
   get: () =>
     api.get('/analytics/'),
 };
 
-/*
- * Registers a request-level function under the same dedupe key the
- * interceptor uses, so a genuine duplicate call (e.g. from a
- * double-clicked submit button) reuses the in-flight promise instead
- * of the interceptor needing to intercept an already-created request.
- * This is the one applied to register/login/submitContext — the
- * three endpoints where a duplicate fire has real side effects
- * (double account creation, double session rotation).
- */
-function trackInFlight(method, url, data, fn) {
-  const body = JSON.stringify(data ?? '');
-  const key = `${method}:${url}:${body}`;
-
-  const existing = inFlightRequests.get(key);
-  if (existing) return existing;
-
-  const promise = fn().finally(() => {
-    inFlightRequests.delete(key);
-  });
-  inFlightRequests.set(key, promise);
-  return promise;
-}
 
 export default api;
