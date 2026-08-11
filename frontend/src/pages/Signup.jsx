@@ -1,7 +1,4 @@
-/**
- * Signup Page — wired to Django auth backend.
- */
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -15,8 +12,12 @@ export default function Signup() {
   const navigate = useNavigate();
   const { register } = useAuth();
 
+  const submittingRef = useRef(false);
+
   const handleSignup = async (e) => {
     e.preventDefault();
+    if (submittingRef.current) return;
+    submittingRef.current = true;
     setLoading(true);
     setError('');
     try {
@@ -26,6 +27,7 @@ export default function Signup() {
       setError(err.message || 'Registration failed. Please try again.');
     } finally {
       setLoading(false);
+      submittingRef.current = false;
     }
   };
 
