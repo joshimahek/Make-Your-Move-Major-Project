@@ -55,25 +55,42 @@ async function ensureCSRFToken() {
 /*
  * Serialize all mutating (POST/PUT/PATCH/DELETE) requests through a
  * queue that blocks on the FULL request/response round trip — not
- * just on reading/attaching the CSRF token.
- *
- * This matters because Django's login()/register() ROTATE the CSRF
- * token as an anti session-fixation measure, and that rotation is
- * only guaranteed to be applied to the browser's cookie jar once the
- * response has actually been received. A queue that only serializes
- * "who reads the cookie first" (the previous version of this file)
- * still lets a second mutating request start while the first one is
- * still in flight — it just moves the race slightly later without
- * closing it.
- *
- * Implementation: each mutating request installs a new "tail" promise
- * in `queueTail`, that IT owns the resolution of. The next mutating
- * request awaits the PREVIOUS tail before it's even allowed to read
- * the CSRF cookie. The current request's tail is only resolved from
- * the response (or error) interceptor — i.e. once the round trip,
- * including the browser applying any rotated Set-Cookie, is done.
+ * just on reading/attaching the CSRF token. Django's login()/
+ * register() rotate the CSRF token server-side; that rotation is
+ * only reflected in the browser's cookie jar once the response has
+ * actually landed, so the next mutating request must wait for that,
+ * not just for "a token was read."
  */
 let queueTail = Promise.resolve();
+
+/*
+ * In-flight de-duplication for mutating requests.
+ *
+ * Root cause of "register/login fires twice, one 403 one succeeds":
+ * a submit button's `disabled={loading}` only takes effect after a
+ * React re-render, so a fast double-click / double-tap / double-Enter
+ * can invoke the same handler twice before the button visually
+ * disables. Both calls independently reach client.js and both fire a
+ * real network request. Whichever response's Set-Cookie lands last in
+ * the browser silently "wins" the cookie jar — the other request's
+ * CSRF/session state is now stale, and it fails.
+ *
+ * Fix: key in-flight mutating requests by method+url+body. If an
+ * identical request is already in flight, return that SAME promise
+ * instead of issuing a second network call. This makes duplicate
+ * fires a no-op at the network layer, regardless of which button,
+ * effect, or page triggered the duplicate — it doesn't rely on every
+ * page remembering to add its own guard.
+ */
+const inFlightRequests = new Map();
+
+function requestKey(config) {
+  const body =
+    typeof config.data === 'string'
+      ? config.data
+      : JSON.stringify(config.data ?? '');
+  return `${config.method}:${config.url}:${body}`;
+}
 
 api.interceptors.request.use((config) => {
   const method = config.method?.toLowerCase();
@@ -82,15 +99,23 @@ api.interceptors.request.use((config) => {
     return config;
   }
 
+  const key = requestKey(config);
+  const existing = inFlightRequests.get(key);
+  if (existing) {
+    // An identical request is already in flight — piggyback on it
+    // instead of sending a duplicate. Mark this config so axios
+    // knows to short-circuit (handled below via adapter override).
+    config.adapter = () => existing;
+    return config;
+  }
+
   const previousTail = queueTail;
   let releaseQueue;
   queueTail = new Promise((resolve) => {
     releaseQueue = resolve;
   });
-  // Stashed on the config so the response/error interceptor (which
-  // runs after the network round trip completes) can release the
-  // next request in line.
   config.__releaseQueue = releaseQueue;
+  config.__requestKey = key;
 
   return previousTail
     .then(() => ensureCSRFToken())
@@ -101,11 +126,6 @@ api.interceptors.request.use((config) => {
       return config;
     })
     .catch((err) => {
-      // Attaching the token itself failed (e.g. the /csrf/ priming
-      // call failed) — this request never reaches the network, so
-      // the response interceptor never fires for it. Release the
-      // queue here instead, or every subsequent mutating request
-      // wedges forever.
       releaseQueue();
       throw err;
     });
@@ -114,20 +134,20 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => {
     response.config.__releaseQueue?.();
+    if (response.config.__requestKey) {
+      inFlightRequests.delete(response.config.__requestKey);
+    }
     return response;
   },
   (error) => {
     error.config?.__releaseQueue?.();
+    if (error.config?.__requestKey) {
+      inFlightRequests.delete(error.config.__requestKey);
+    }
     return Promise.reject(error);
   }
 );
 
-/*
- * Optional: call once, early, to remove the very first cold-start
- * /csrf/ round trip from the critical path. Not required for
- * correctness — ensureCSRFToken() + the queue above handle it lazily
- * either way.
- */
 export async function primeCSRF() {
   await ensureCSRFToken();
 }
@@ -138,10 +158,14 @@ export async function primeCSRF() {
 
 export const authAPI = {
   register: (data) =>
-    api.post('/auth/register/', data),
+    trackInFlight('post', '/auth/register/', data, () =>
+      api.post('/auth/register/', data)
+    ),
 
   login: (data) =>
-    api.post('/auth/login/', data),
+    trackInFlight('post', '/auth/login/', data, () =>
+      api.post('/auth/login/', data)
+    ),
 
   logout: () =>
     api.post('/auth/logout/'),
@@ -165,7 +189,9 @@ export const sessionAPI = {
     api.post('/session/reset/'),
 
   submitContext: (data) =>
-    api.post('/session/context/', data),
+    trackInFlight('post', '/session/context/', data, () =>
+      api.post('/session/context/', data)
+    ),
 };
 
 /* =========================================================
@@ -227,5 +253,28 @@ export const analyticsAPI = {
   get: () =>
     api.get('/analytics/'),
 };
+
+/*
+ * Registers a request-level function under the same dedupe key the
+ * interceptor uses, so a genuine duplicate call (e.g. from a
+ * double-clicked submit button) reuses the in-flight promise instead
+ * of the interceptor needing to intercept an already-created request.
+ * This is the one applied to register/login/submitContext — the
+ * three endpoints where a duplicate fire has real side effects
+ * (double account creation, double session rotation).
+ */
+function trackInFlight(method, url, data, fn) {
+  const body = JSON.stringify(data ?? '');
+  const key = `${method}:${url}:${body}`;
+
+  const existing = inFlightRequests.get(key);
+  if (existing) return existing;
+
+  const promise = fn().finally(() => {
+    inFlightRequests.delete(key);
+  });
+  inFlightRequests.set(key, promise);
+  return promise;
+}
 
 export default api;
