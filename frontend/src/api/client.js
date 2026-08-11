@@ -31,33 +31,93 @@ function getCSRFTokenFromCookie() {
   return '';
 }
 
+/*
+ * Singleton in-flight promise for /csrf/.
+ *
+ * Without this, two requests firing back-to-back (e.g. login
+ * immediately followed by a session call) can each see "no cookie
+ * yet", each independently call GET /csrf/, and each get back a
+ * DIFFERENT csrf secret from Django. Whichever response lands last
+ * wins the browser's cookie jar — the other request already grabbed
+ * a token that no longer matches anything, and gets rejected with
+ * "CSRF token ... incorrect".
+ *
+ * By sharing one in-flight fetch, every caller waits on the same
+ * request and reads the same resulting cookie.
+ */
+let csrfFetchPromise = null;
+
 async function ensureCSRFToken() {
-  await api.get('/csrf/');
+  const existing = getCSRFTokenFromCookie();
+  if (existing) return existing;
+
+  if (!csrfFetchPromise) {
+    csrfFetchPromise = api.get('/csrf/').finally(() => {
+      csrfFetchPromise = null;
+    });
+  }
+
+  await csrfFetchPromise;
   return getCSRFTokenFromCookie();
 }
 
 /*
- * Add the CURRENT CSRF cookie value to every
- * POST / PUT / PATCH / DELETE request.
+ * Serialize all mutating (POST/PUT/PATCH/DELETE) requests through a
+ * shared tail promise.
+ *
+ * Why this matters beyond ensureCSRFToken(): Django's login() call
+ * ROTATES the CSRF token as a deliberate anti session-fixation
+ * measure. If your app code fires a second mutating request before
+ * awaiting the login response (or in parallel with it, e.g. via
+ * Promise.all or a fire-and-forget call in a useEffect), that second
+ * request's interceptor can read the cookie BEFORE the browser has
+ * applied the new Set-Cookie from login's response — attaching an
+ * already-rotated-out token.
+ *
+ * Chaining every mutating request onto one queue forces them to run
+ * strictly one at a time, in the order they were issued, so each one
+ * always reads the cookie state left behind by the previous one.
  */
-api.interceptors.request.use(async (config) => {
+let requestQueue = Promise.resolve();
+
+api.interceptors.request.use((config) => {
   const method = config.method?.toLowerCase();
 
-  if (['post', 'put', 'patch', 'delete'].includes(method)) {
-    let token = getCSRFTokenFromCookie();
+  if (!['post', 'put', 'patch', 'delete'].includes(method)) {
+    return config;
+  }
 
-    // If there is no CSRF cookie yet, ask Django to create one.
-    if (!token) {
-      token = await ensureCSRFToken();
-    }
-
+  const attachToken = async () => {
+    const token = await ensureCSRFToken();
     if (token) {
       config.headers['X-CSRFToken'] = token;
     }
-  }
+    return config;
+  };
 
-  return config;
+  // Chain onto the queue regardless of whether the previous entry
+  // succeeded or failed, so one rejected request can't wedge the
+  // queue for everything after it.
+  const next = requestQueue.then(attachToken, attachToken);
+  requestQueue = next.then(
+    () => undefined,
+    () => undefined
+  );
+
+  return next;
 });
+
+/*
+ * Call this once, early, on app startup (e.g. in main.jsx before
+ * rendering, or in a top-level auth-check effect) to prime the CSRF
+ * cookie before any mutating requests exist to race each other.
+ * Not required for correctness now that requests are queued and
+ * ensureCSRFToken() is a singleton, but it removes the very first
+ * cold-start round trip from the critical path.
+ */
+export async function primeCSRF() {
+  await ensureCSRFToken();
+}
 
 /* =========================================================
    AUTH
