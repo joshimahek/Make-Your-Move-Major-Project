@@ -2,6 +2,7 @@ import { useState, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useAssessment } from '../context/AssessmentContext';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -10,6 +11,7 @@ export default function Login() {
   const [error, setError] = useState('');
   const navigate = useNavigate();
   const { login } = useAuth();
+  const { startSession } = useAssessment();
 
   // Synchronous re-entrancy guard. `loading` (React state) only takes
   // effect after a re-render, so a fast double-click or double Enter
@@ -29,6 +31,7 @@ export default function Login() {
     setError('');
     try {
       await login(email, password);
+      await startSession();
       navigate('/context');
     } catch (err) {
       setError(err.message || 'Login failed. Please try again.');
