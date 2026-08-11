@@ -1,7 +1,4 @@
-/**
- * Context Intake — 3 personalization questions with interactive card selection.
- */
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAssessment } from '../context/AssessmentContext';
@@ -52,6 +49,8 @@ export default function ContextIntake() {
   const isLast = currentQ === QUESTIONS.length - 1;
   const selectedValue = answers[question.key];
 
+  const submittingRef = useRef(false);
+
   const handleSelect = (value) => {
     setAnswers(prev => ({ ...prev, [question.key]: value }));
   };
@@ -59,12 +58,16 @@ export default function ContextIntake() {
   const handleNext = async () => {
     if (!selectedValue) return;
     if (isLast) {
+      if (submittingRef.current) return;
+      submittingRef.current = true;
       try {
         const result = await submitContext(answers);
         const firstActivity = result.activity_order?.[0] || 1;
         navigate(`/activity/${firstActivity}`);
       } catch (err) {
         console.error('Context submit failed:', err);
+      } finally {
+        submittingRef.current = false;
       }
     } else {
       setCurrentQ(prev => prev + 1);
@@ -77,7 +80,6 @@ export default function ContextIntake() {
 
   return (
     <div className="context-intake container container-sm">
-      {/* Question counter */}
       <div className="question-counter">
         {QUESTIONS.map((_, i) => (
           <div key={i} className={`counter-dot ${i === currentQ ? 'active' : ''} ${i < currentQ ? 'done' : ''}`} />
