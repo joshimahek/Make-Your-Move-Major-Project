@@ -36,6 +36,10 @@ export function AuthProvider({ children }) {
       setUser(res.data.user);
       return res.data;
     } catch (err) {
+      if (err.response?.data?.requires_verification) {
+        setUser(null);
+        return err.response.data;
+      }
       const message = err.response?.data?.error || 'Login failed. Please try again.';
       setAuthError(message);
       throw new Error(message);
@@ -49,12 +53,31 @@ export function AuthProvider({ children }) {
     setAuthError(null);
     try {
       const res = await authAPI.register({ name, email, password });
-      setUser(res.data.user);
       return res.data;
     } catch (err) {
       const message = err.response?.data?.error || 'Registration failed. Please try again.';
       setAuthError(message);
       throw new Error(message);
+    } finally {
+      setAuthLoading(false);
+    }
+  }, []);
+
+  const verifyOTP = useCallback(async (email, otp) => {
+    setAuthLoading(true);
+    setAuthError(null);
+    try {
+      const res = await authAPI.verifyOTP(email, otp);
+      setUser(res.data.user);
+      return res.data;
+    } catch (err) {
+      const responseData = err.response?.data || {};
+      const message = responseData.error || 'Verification failed. Please try again.';
+      const error = new Error(message);
+      error.attemptsRemaining = responseData.attempts_remaining;
+      error.expired = responseData.expired || false;
+      setAuthError(message);
+      throw error;
     } finally {
       setAuthLoading(false);
     }
@@ -79,6 +102,7 @@ export function AuthProvider({ children }) {
     isAdmin: user?.is_staff || false,
     login,
     register,
+    verifyOTP,
     logout,
     clearError,
   };

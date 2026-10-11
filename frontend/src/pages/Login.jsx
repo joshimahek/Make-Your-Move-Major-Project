@@ -1,8 +1,10 @@
-import { useState, useRef } from 'react';
+/**
+ * Login Page — wired to Django auth backend.
+ */
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { useAssessment } from '../context/AssessmentContext';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -11,33 +13,22 @@ export default function Login() {
   const [error, setError] = useState('');
   const navigate = useNavigate();
   const { login } = useAuth();
-  const { startSession } = useAssessment();
-
-  // Synchronous re-entrancy guard. `loading` (React state) only takes
-  // effect after a re-render, so a fast double-click or double Enter
-  // can invoke handleLogin twice before the button actually disables.
-  // Two concurrent login POSTs each get their own Set-Cookie for
-  // sessionid/csrftoken; whichever lands last in the browser silently
-  // wins, leaving the app's belief about "logged in" out of sync with
-  // the cookie jar. This ref check is checked BEFORE any state update,
-  // so it closes that gap.
-  const submittingRef = useRef(false);
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    if (submittingRef.current) return;
-    submittingRef.current = true;
     setLoading(true);
     setError('');
     try {
-      await login(email, password);
-      await startSession();
-      navigate('/context');
+      const result = await login(email, password);
+      if (result.requires_verification) {
+        navigate('/verify-otp', { state: { email: result.email || email } });
+      } else {
+        navigate('/context');
+      }
     } catch (err) {
       setError(err.message || 'Login failed. Please try again.');
     } finally {
       setLoading(false);
-      submittingRef.current = false;
     }
   };
 

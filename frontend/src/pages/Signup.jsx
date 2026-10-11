@@ -1,8 +1,10 @@
-import { useState, useRef } from 'react';
+/**
+ * Signup Page — wired to Django auth backend.
+ */
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { useAssessment } from '../context/AssessmentContext';
 
 export default function Signup() {
   const [name, setName] = useState('');
@@ -12,25 +14,23 @@ export default function Signup() {
   const [error, setError] = useState('');
   const navigate = useNavigate();
   const { register } = useAuth();
-  const { startSession } = useAssessment();
-
-  const submittingRef = useRef(false);
 
   const handleSignup = async (e) => {
     e.preventDefault();
-    if (submittingRef.current) return;
-    submittingRef.current = true;
     setLoading(true);
     setError('');
     try {
-      await register(name, email, password);
-      await startSession();
-      navigate('/context');
+      const result = await register(name, email, password);
+      navigate('/verify-otp', {
+        state: {
+          email: result.email || email,
+          resendAvailableIn: result.resend_available_in || 0,
+        },
+      });
     } catch (err) {
       setError(err.message || 'Registration failed. Please try again.');
     } finally {
       setLoading(false);
-      submittingRef.current = false;
     }
   };
 

@@ -15,6 +15,7 @@ import DeepDive from './pages/DeepDive';
 import Roadmap from './pages/Roadmap';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
+import VerifyOTP from './pages/VerifyOTP';
 import Analytics from './pages/Analytics';
 
 /**
@@ -77,12 +78,14 @@ function AnimatedRoutes() {
         <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Layout><Login /></Layout>} />
         <Route path="/signup" element={<Layout><Signup /></Layout>} />
+        <Route path="/verify-otp" element={<Layout><VerifyOTP /></Layout>} />
 
         {/* Protected routes — require login */}
         <Route path="/context" element={<ProtectedRoute><Layout><ContextIntake /></Layout></ProtectedRoute>} />
         <Route path="/activity/:activityNumber" element={<ProtectedRoute><Layout><ActivityRouter /></Layout></ProtectedRoute>} />
         <Route path="/thinking-styles" element={<ProtectedRoute><Layout><ThinkingStyles /></Layout></ProtectedRoute>} />
         <Route path="/results" element={<ProtectedRoute><Layout><Results /></Layout></ProtectedRoute>} />
+        <Route path="/deep-dive" element={<ProtectedRoute><Layout><DeepDive /></Layout></ProtectedRoute>} />
         <Route path="/deep-dive/:domain" element={<ProtectedRoute><Layout><DeepDive /></Layout></ProtectedRoute>} />
         <Route path="/roadmap/:domain" element={<ProtectedRoute><Layout><Roadmap /></Layout></ProtectedRoute>} />
 
